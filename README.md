@@ -44,14 +44,14 @@ scattering theory, vol. 93, Springer, 1998.]
 Sound field pressure measured by a sound receiver / microphone at position $\mathbf{x}$ due to a sound source at position $\mathbf{y}$.
 
 ### Point source Green's function
-$ G(k, \mathbf{x}, \mathbf{y}) = \frac{e^{ik|\mathbf{x} - \mathbf{y}|}}{|\mathbf{x} - \mathbf{y}|} $
+$$ G(k, \mathbf{x}, \mathbf{y}) = \frac{e^{ik|\mathbf{x} - \mathbf{y}|}}{|\mathbf{x} - \mathbf{y}|} $$
 ```
 [G] = shaasp.sfd_greens('ps', k, source_position[x,y,z], mic_position[x,y,z]);
 ```
 
 
 ### Planewave Green's function
-$ G(k, \mathbf{x}, \hat{\mathbf{y}}) = e^{-ik\hat{\mathbf{y}} \cdot \mathbf{x}} $
+$$ G(k, \mathbf{x}, \hat{\mathbf{y}}) = e^{-ik\hat{\mathbf{y}} \cdot \mathbf{x}} $$
 ```
 [G] = shaasp.sfd_greens('pw', k, source_position[x,y,z], mic_position[x,y,z]);
 ```
@@ -60,7 +60,7 @@ Note that for planewave, the source position [x,y,z] is a unit vector pointing t
 ## Spherical Harmonic Functions
 
 ### Complex spherical harmonics basis functions
-$ Y_{nm}(\theta,\phi) = \sqrt{\frac{2n+1}{4\pi}\frac{(n-m)!}{(n+m)!}} \mathcal{P}_{nm}(\cos{\theta}) e^{im\phi} $
+$$ Y_{nm}(\theta,\phi) = \sqrt{\frac{2n+1}{4\pi}\frac{(n-m)!}{(n+m)!}} \mathcal{P}_{nm}(\cos{\theta}) e^{im\phi} $$
 - where $\mathcal{P}$ are the associate Legendre functions including the $(-1)^m$ Condon-Shortley phase term.
 ```
 [Y] = shaasp.sph_ynm(N, theta, phi)
@@ -68,7 +68,7 @@ $ Y_{nm}(\theta,\phi) = \sqrt{\frac{2n+1}{4\pi}\frac{(n-m)!}{(n+m)!}} \mathcal{P
 - Returns $Y_{nm}$ for all $(n,m)$ combinations [(0,0), (1,-1), (1,0), (1,+1), (2,-2), ... (N,+N)]
 
 ### Spherical Bessel function (first kind)
-$ j_{n}(kr) = \frac{1}{\sqrt{kr}} \sqrt{\frac{\pi}{2}} J_{(n+0.5)}(kr) $
+$$ j_{n}(kr) = \frac{1}{\sqrt{kr}} \sqrt{\frac{\pi}{2}} J_{(n+0.5)}(kr) $$
 - where $J$ is the Bessel function of first kind given by ```besselj``` function.
 ```
 [j] = shaasp.sph_jn(N, k, r)
@@ -76,7 +76,7 @@ $ j_{n}(kr) = \frac{1}{\sqrt{kr}} \sqrt{\frac{\pi}{2}} J_{(n+0.5)}(kr) $
 - Returns all (n,m) for [(0,0), (1,-1), (1,0), (1,+1), (2,-2), ... (N,+N)]
 
 ### Spherical Hankel function (first kind)
-$ h_{n}(kr) = \frac{1}{\sqrt{kr}} \sqrt{\frac{\pi}{2}} H_{(n+0.5)}(kr) $
+$$ h_{n}(kr) = \frac{1}{\sqrt{kr}} \sqrt{\frac{\pi}{2}} H_{(n+0.5)}(kr) $$
 - where $H$ denotes the Hankel function from ```besselh```. 
 ```
 [h] = shaasp.sph_hn(N, k, r)
@@ -88,7 +88,7 @@ $ h_{n}(kr) = \frac{1}{\sqrt{kr}} \sqrt{\frac{\pi}{2}} H_{(n+0.5)}(kr) $
 ### Example: spherical harmonic coefficients
 Interior sound field spherical harmonic coefficients:
 
-$ \alpha_{nm}(k) = i k h_{n}(kr) Y_{nm}^{*}(\theta, \phi) $
+$$ \alpha_{nm}(k) = i k h_{n}(kr) Y_{nm}^{*}(\theta, \phi) $$
 - where $(r,\theta,\phi)$ is the source position.
 ```
 % Setup acoustic environment.
@@ -110,7 +110,7 @@ alphas = 1i .* k .* shaasp.sph_hn(N, k, src_r) .* conj(shaasp.sph_ynm(N, src_the
 ### Example: spherical harmonic sound field reconstruction
 Reconstruct pressure at microphone in spherical harmonic sound field described by alpha coefficients.
 
-$ P(k,\mathbf{x}) = \sum_{n=0}^{N} \sum_{m=-n}^{n} \alpha_{nm}(k) j_{n}(kr) Y_{nm}(\theta, \phi) $
+$$ P(k,\mathbf{x}) = \sum_{n=0}^{N} \sum_{m=-n}^{n} \alpha_{nm}(k) j_{n}(kr) Y_{nm}(\theta, \phi) $$
 - where $\mathbf{x} \equiv (r,\theta,\phi)$ is the receiver/mic position.
 
 ```
@@ -156,14 +156,14 @@ mic_pressure = shaasp.sfd_greens_sphcoord('ps', k, [src_r, src_theta, src_phi], 
 
 Estimate the sound field coefficients by the sphercial harmonic analysis equation:
 
-$ \alpha_{nm}(k) \approx \frac{1}{j_{n}(kR_{q})} \sum_{q=1}^{Q} w_{q} P(k, \mathbf{x}_{q}) Y_{nm}^{*}(\theta_{q}, \phi_{q}) $
+$$ \alpha_{nm}(k) \approx \frac{1}{j_{n}(kR_{q})} \sum_{q=1}^{Q} w_{q} P(k, \mathbf{x}_{q}) Y_{nm}^{*}(\theta_{q}, \phi_{q}) $$
 - where $q = [1, ..., Q]$ index the number of microphones
 - $w_{q}$ are array sampling weights
 - $R_{q}$ is the radius of the array
 
 In practice, numerical optimisation can be used by:
 
-$ \mathbf{A}(k) = \text{pinv}(\mathbf{j}(k) \, \mathbf{Y}) * \mathbf{P}(k) $
+$$ \mathbf{A}(k) \approx \text{pinv}(\mathbf{j}(k) \, \mathbf{Y}) * \mathbf{P}(k) $$
 - where pinv() denotes Moore-Penrose pseudoinverse
 - $\mathbf{A}$ is the [(N+1)^2 by 1] set of $\alpha_{nm}(k)$ coefficients
 - $\mathbf{j}$ and $ \mathbf{Y}$ are [Q by (N+1)^2] matrices of $j_{n}(kr_{q})$ and $Y_{nm}(\theta_{q}, \phi_{q})$ terms
