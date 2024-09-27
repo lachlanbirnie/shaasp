@@ -156,14 +156,14 @@ mic_pressure = shaasp.sfd_greens_sphcoord('ps', k, [src_r, src_theta, src_phi], 
 
 Estimate the sound field coefficients by the sphercial harmonic analysis equation:
 
-$$ \alpha_{nm}(k) \approx \frac{1}{j_{n}(kR_{q})} \sum_{q=1}^{Q} w_{q} P(k, \mathbf{x}_{q}) Y_{nm}^{*}(\theta_{q}, \phi_{q}) $$
+$$ \alpha_{nm}(k) \approx \frac{1}{j_{n}(kR_{q})} \sum_{q=1}^{Q} w_{q} P(k, \mathbf{x_q}) Y_{nm}^{*}(\theta_{q}, \phi_{q}) $$
 - where $q = [1, ..., Q]$ index the number of microphones
 - $w_{q}$ are array sampling weights
 - $R_{q}$ is the radius of the array
 
 In practice, numerical optimisation can be used by:
 
-$$ \mathbf{A}(k) \approx \text{pinv}(\mathbf{j}(k) \, \mathbf{Y}) * \mathbf{P}(k) $$
+$$ \mathbf{A}(k) \approx \text{pinv}(\mathbf{j}(k) \mathbf{Y}) * \mathbf{P}(k) $$
 - where pinv() denotes Moore-Penrose pseudoinverse
 - $\mathbf{A}$ is the [(N+1)^2 by 1] set of $\alpha_{nm}(k)$ coefficients
 - $\mathbf{j}$ and $ \mathbf{Y}$ are [Q by (N+1)^2] matrices of $j_{n}(kr_{q})$ and $Y_{nm}(\theta_{q}, \phi_{q})$ terms
