@@ -1,5 +1,5 @@
-# SHAASP 
-Spherical Harmonic And Audio Signal Processing (SHAASP) MATLAB functions
+# Spherical Harmonic And Audio Signal Processing functions 
+A collection of Spherical Harmonic And Audio Signal Processing (SHAASP) MATLAB functions.
 
 Matlab functions for common equations in simulating spherical harmonics, sound fields, point sources, planewaves, and audio signals. 
 
@@ -86,7 +86,7 @@ $$ h_{n}(kr) = \frac{1}{\sqrt{kr}} \sqrt{\frac{\pi}{2}} H_{(n+0.5)}(kr) $$
 ## Spherical Harmonic Examples
 
 ### Example: spherical harmonic coefficients
-Interior sound field spherical harmonic coefficients:
+Interior sound field spherical harmonic coefficients for a point source:
 
 $$ \alpha_{nm}(k) = i k h_{n}(kr) Y_{nm}^{*}(\theta, \phi) $$
 - where $(r,\theta,\phi)$ is the source position.
