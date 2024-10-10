@@ -29,7 +29,7 @@ function [h_surf, spec] = plt_spectrum(spec, nfft, fs, wlen, hop, dark_mode, new
 % Email: Lachlan.Birnie@anu.edu.au
 % Website: https://github.com/lachlanbirnie
 % Creation: 30-July-2024
-% Last revision: 29-Aug-2024
+% Last revision: 04-Oct-2024
 
 % Optional inputs.
 arguments
@@ -58,6 +58,10 @@ else
     end
     fbin_vals = shaasp.cola_nfft_bin_frequencies(fs, nfft, single_sided);
     fbin_label = 'Frequency (Hz)';
+    if max(fbin_vals) > 20000
+        fbin_vals = fbin_vals ./ 1000;
+        fbin_label = 'Frequency (kHz)';
+    end
 end
 
 % Find time axis values.
@@ -76,10 +80,13 @@ if ~isreal(spec)
 end
 
 % Find color axis values.
-mean_spec = mean(spec(:));
-var_spec = var(spec(:));
-cmin = max(min(spec(:)), mean_spec - var_spec);
-cmax = min(max(spec(:)), mean_spec + var_spec);
+mean_spec = mean(spec(~isinf(spec)));
+var_spec = var(spec(~isinf(spec)));
+cmin = max(min(spec(~isinf(spec))), mean_spec - var_spec) / 2;
+cmax = min(max(spec(~isinf(spec))), mean_spec + var_spec) / 2;
+
+% Remove -inf and NaN for plotting.
+spec(isinf(spec)) = intmin;  % Replace log10(0) = -inf -> intmin
 
 % Plotting.
 if new_fig
@@ -107,7 +114,7 @@ for i = (1 : spec_nchannels)
     ylabel(cbar, 'Magnitude');
     colormap(jet(128));
     xlim([0, tbin_vals(end)]);
-    ylim([10, fbin_vals(end)]);
+    ylim([0, fbin_vals(end)]);
     clim([cmin, cmax]);
     set(gca, 'FontSize', 18);
     title(sprintf('%i',i), 'Color', [0,0,0]);
