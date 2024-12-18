@@ -22,7 +22,7 @@ function [r,t,p,x,y,z,w] = sampling_positions_em32_eigenmike()
 %   x       | [Q by 1] x-position of each sensor w.r.t center
 %   y       | [Q by 1] y-position ""
 %   z       | [Q by 1] z-position ""
-%   w       | [Q by 1] sampling weight of each sensor 
+%   w       | [Q by 1] sampling weight of each sensor
 %
 % Author: Lachlan Birnie
 % Audio & Acoustic Signal Processing Group - Australian National University
@@ -31,79 +31,84 @@ function [r,t,p,x,y,z,w] = sampling_positions_em32_eigenmike()
 % Creation: 25-March-2019
 % Last revision: 02-March-2023
 
-    % Spherical (r, theta, phi) coordinates (rads).
-    r = ones(32, 1) .* 0.042;
-    t = [   69  ;
-            90  ;
-            111 ;
-            90  ;
-            32  ;
-            55  ;
-            90  ;
-            125 ;
-            148 ;
-            125 ;
-            90  ;
-            55  ;
-            21  ;
-            58  ;
-            121 ;
-            159 ;
-            69  ;
-            90  ;
-            111 ;
-            90  ;
-            32  ;
-            55  ;
-            90  ;
-            125 ;
-            148 ;
-            125 ;
-            90  ;
-            55  ;
-            21  ;
-            58  ;
-            122 ;
-            159 ;   ] .* (2*pi/360);
-    p = [   0   ;
-            32  ;
-            0   ;
-            328 ;
-            0   ;
-            45  ;
-            69  ;
-            45  ;
-            0   ;
-            315 ;
-            291 ;
-            315 ;
-            91  ;
-            90  ;
-            90  ;
-            89  ;
-            180 ;
-            212 ;
-            180 ;
-            148 ;
-            180 ;
-            225 ;
-            249 ;
-            225 ;
-            180 ;
-            135 ;
-            111 ;
-            135 ;
-            269 ;
-            270 ;
-            270 ;
-            271 ;   ] .* (2*pi/360);        
-        
-    % Cartesian (x,y,z) coordinates (m).
-    x = (r .* sin(t) .* cos(p));
-    y = (r .* sin(t) .* sin(p));
-    z = (r .* cos(t));
-    
-    % Uniform sampling weights.
-    w = ones(size(t));
+% Spherical (r, theta, phi) coordinates (rads).
+r = ones(32, 1) .* 0.042;
+t = [   69  ;
+    90  ;
+    111 ;
+    90  ;
+    32  ;
+    55  ;
+    90  ;
+    125 ;
+    148 ;
+    125 ;
+    90  ;
+    55  ;
+    21  ;
+    58  ;
+    121 ;
+    159 ;
+    69  ;
+    90  ;
+    111 ;
+    90  ;
+    32  ;
+    55  ;
+    90  ;
+    125 ;
+    148 ;
+    125 ;
+    90  ;
+    55  ;
+    21  ;
+    58  ;
+    122 ;
+    159 ;   ] .* (2*pi/360);
+p = [   0   ;
+    32  ;
+    0   ;
+    328 ;
+    0   ;
+    45  ;
+    69  ;
+    45  ;
+    0   ;
+    315 ;
+    291 ;
+    315 ;
+    91  ;
+    90  ;
+    90  ;
+    89  ;
+    180 ;
+    212 ;
+    180 ;
+    148 ;
+    180 ;
+    225 ;
+    249 ;
+    225 ;
+    180 ;
+    135 ;
+    111 ;
+    135 ;
+    269 ;
+    270 ;
+    270 ;
+    271 ;   ] .* (2*pi/360);
+
+% Cartesian (x,y,z) coordinates (m).
+x = (r .* sin(t) .* cos(p));
+y = (r .* sin(t) .* sin(p));
+z = (r .* cos(t));
+
+% Uniform sampling weights.
+w = ones(size(t));
+
+% Plot the positions if no output.
+if ~nargout
+    shaasp.sampling_positions_plot_on_sphere(x,y,z);
+end
 
 end

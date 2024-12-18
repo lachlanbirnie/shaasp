@@ -28,6 +28,11 @@ function [djndx] = sph_djndx(N,k,r)
 %
 %       d/dx j_n(x) = ( (n/x) * j_(n)(x) ) - j_(n+1)(x)
 %
+%   if x = 0:
+%
+%   d/dx jn(x) = 0      [for n != 1]
+%   d/dx jn(x) = 1/3    [for n == 1]
+%
 % Other m-files required: none
 % Subfunctions: none
 % MAT-files required: none
@@ -39,7 +44,7 @@ function [djndx] = sph_djndx(N,k,r)
 % Email: Lachlan.Birnie@anu.edu.au
 % Website: https://github.com/lachlanbirnie
 % Creation: 28-Jan-2021
-% Last revision: 19-July-2024
+% Last revision: 16-Dec-2024
 
 
     % Input checking.
@@ -87,5 +92,12 @@ function [djndx] = sph_djndx(N,k,r)
     
     % Differential first kind spherical Bessel function.
     djndx = ( (arg_n ./ (arg_k .* arg_r)) .* jn) - jn_plus1;
+
+    % Address differential bessel zeros.
+    if ~isempty(ind_x_zero)
+        ind_n_one = (arg_n == 1);
+        djndx(ind_x_zero & ind_n_one) = 1/3;  % d/dx jn(x) = 1/3    [for n == 1]
+        djndx(ind_x_zero & ~ind_n_one) = 0;  % d/dx jn(x) = 0      [for n != 1]
+    end
 
 end

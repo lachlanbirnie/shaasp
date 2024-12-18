@@ -30,10 +30,10 @@ end
 
 spec_nframes = size(spec, 2);
 
-if isempty(num_ave_time_frames)
+if isempty(num_ave_time_frames) || (num_ave_time_frames > spec_nframes)
     num_ave_time_frames = spec_nframes;
 end
-
+    
 switch averaging_method
     case "all"
         ave_spec = mean(spec, 2);

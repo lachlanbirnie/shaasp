@@ -3322,5 +3322,10 @@ z = posXYZW(:,3);
 % Weights. 
 w = posXYZW(:,4);
 
+% Plot the positions if no output.
+if ~nargout
+    shaasp.sampling_positions_plot_on_sphere(x,y,z);
+end
+
 end
 % end    [r,t,p,x,y,z,w] = fliege_sphere_positions(L)
