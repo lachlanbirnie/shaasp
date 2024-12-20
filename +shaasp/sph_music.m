@@ -5,7 +5,7 @@ function [M, T, P] = sph_music(alpha, num_src, r, k, options)
 % Syntax:  [M, T, P] = shmusic(alpha, num_src, r, k, options)
 %
 % Inputs:
-%   alpha - Interior sound field coefficients [N,1], [N,K] or [N,T,K].
+%   alpha - Interior sound field coefficients [N,1], [N,K] or [N,K,T].
 %   num_src - Number of sources to localise.
 %   r - Steering radius for near-field localisation.
 %   k - Steering wave number for near-field localisation.
@@ -55,11 +55,10 @@ if ndims(alpha) <=2
     alpha = permute(alpha, [1,3,2]);  % [N,1,K]
     Ra = pagemtimes(alpha, 'none', alpha, 'ctranspose');  % [N,N,K]
 else
-    % Alpha [N,T,K], average over time dimension.
-    alpha = permute(alpha, [1,4,2,3]);  % [N,1,T,K]
-    Ra = pagemtimes(alpha, 'none', alpha, 'ctranspose');  % [N,N,T,K]
-    Ra = mean(Ra, 3, "omitmissing");
-    Ra = permute(Ra, [1,2,4,3]);  % [N,N,K]
+    % Alpha [N,K,T], average over time dimension.
+    alpha = permute(alpha, [1,4,2,3]);  % [N,1,K,T]
+    Ra = pagemtimes(alpha, 'none', alpha, 'ctranspose');  % [N,N,K,T]
+    Ra = mean(Ra, 4, "omitmissing");  % [N,N,K]
 end
 
 % Create localisation / plotting grid.
@@ -102,14 +101,16 @@ else
     % Average MUSIC spectra over frequencies.
     M = mean(Mband, 2, 'omitmissing');
     M = reshape(M, [length(t), length(p)]);
+    M = M ./ max(abs(M(:)));  % Normalise M.
+    if options.logscale
+        M = 10 .* log10(M);  % Log scale.
+    end
 end
 
 % Plot MUSIC spectra.
 if ~nargout || options.f_plot
-    M = M ./ max(abs(M(:)));  % Normalise M.
     
     if options.logscale
-        M = 10.*log10(M);
         cmin = -40;
         M(M < cmin) = cmin;
     else

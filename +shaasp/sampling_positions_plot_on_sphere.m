@@ -19,7 +19,7 @@ function sampling_positions_plot_on_sphere(x,y,z)
     sx = sx .* R;
     sy = sy .* R;
     sz = sz .* R;
-    surf(sx, sy, sz, 'FaceColor', 'none', 'EdgeColor', 'c');
+    surf(sx, sy, sz, 'FaceColor', 'none', 'EdgeColor', 'c', 'LineStyle', '--');
 
     % Sampling positions.
     for i = (1 : length(x))
