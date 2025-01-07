@@ -1,16 +1,17 @@
-function [bn] = sph_bn(N,k,r)
+function [bn] = sph_bn(N,k,r,r_baff)
 % SPH_BN - Spherical Rigid Baffle Equation, bn(kr).
 %   Function assumes a rigid sphere, where the sphere radius is equal to
 %   the receiver radii. 
 %   Use sph_jn() for a open sphere case. 
 %
-% Syntax:  [output1,output2] = function_name(input1,input2,input3)
+% Syntax:  [bn] = sph_bn(N,k,r,R)
 %
 % Inputs:
 %
-%   N   Order of the returned baffle term matrix.
-%   k   [1 by K] vector of frequency (wave number) arguments.
-%   r   [Q by 1] vector of radius arguments (m).
+%   N       Order of the returned baffle term matrix.
+%   k       [1 by K] vector of frequency (wave number) arguments.
+%   r       [Q by 1] vector of radius arguments (m).
+%   r_baff  Radius of rigid baffle, default is same as r.
 %
 % Outputs:
 %
@@ -35,9 +36,9 @@ function [bn] = sph_bn(N,k,r)
 %
 %   Rigid Baffle Equation:
 %
-%                           /  d/dx j_n(kr)           \
+%                           /  d/dx j_n(kR)           \
 %       b_n(kr) = j_n(kr) - |  ------------ X h_n(kr) |     [rigid sphere]
-%                           \  d/dx h_n(kr)           /
+%                           \  d/dx h_n(kR)           /
 %
 %       b_n(kr) = j_n(kr)                                   [open sphere]
 %
@@ -46,21 +47,27 @@ function [bn] = sph_bn(N,k,r)
 % Subfunctions: none
 % MAT-files required: none
 %
-% See also: OTHER_FUNCTION_NAME1,  OTHER_FUNCTION_NAME2
+% See also: sph_jn,  sph_bn_cardioid.
 %
 % Author: Lachlan Birnie
 % Audio & Acoustic Signal Processing Group - Australian National University
 % Email: Lachlan.Birnie@anu.edu.au
 % Website: https://github.com/lachlanbirnie
 % Creation: 28-Jan-2021
-% Last revision: 19-July-2024
+% Last revision: 07-Jan-2025
 
+    arguments
+        N (1,1) {mustBeInteger}
+        k
+        r
+        r_baff = r;
+    end
     
     import shaasp.sph_jn
     import shaasp.sph_djndx
     import shaasp.sph_dhndx
     import shaasp.sph_hn
     
-    bn = sph_jn(N,k,r) - (sph_djndx(N,k,r) ./ sph_dhndx(N,k,r)) .* sph_hn(N,k,r);
+    bn = sph_jn(N,k,r) - (sph_djndx(N,k,r_baff) ./ sph_dhndx(N,k,r_baff)) .* sph_hn(N,k,r);
 
 end

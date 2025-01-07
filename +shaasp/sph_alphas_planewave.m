@@ -1,5 +1,6 @@
 function [alphas, alphas_ell] = sph_alphas_planewave(N, source_rtp, kind)
 % kind = '-' / 'outgoing' (default) or '+' / 'incoming'
+% Output: alphas [N, 1], alphas_ell [N, L].
 % Lachlan Birnie
 % 06-Jan-2024
 
