@@ -1,4 +1,4 @@
-function [bn] = sph_bn_cardioid(N,k,r)
+function [bn] = sph_bn_cardioid(N,k,r,options)
 % SPH_BN_CARDIOID - Array weighting function for open cardioid array.
 %   Function assumes a open cardioid sphere, 
 %   where the sphere radius is equal to the receiver radii. 
@@ -13,22 +13,11 @@ function [bn] = sph_bn_cardioid(N,k,r)
 %
 % Outputs:
 %
-%   b  [Q by (N+1)^2 by K] matrix of rigid baffle terms,
-%      where b(a,b,c) = b_[n(b)](k(c)*r(a));
+%   bn  [(N+1)^2 by Q by K] matrix of rigid baffle equation.
 %
-%       b(:,:,k_1) = [ b_0(k_1*r_1) b_1(k_1*r_1) ... b_N(k_1*r_1)
-%                      b_0(k_1*r_2) b_1(k_1*r_2) ... b_N(k_1*r_2)
-%                      ...
-%                      b_0(k_1*r_Q) b_1(k_1*r_Q) ... b_N(k_1*r_Q) ]
-%
-%       b(:,:,k_2) = [ b_0(k_2*r_1) b_1(k_2*r_1) ... b_N(k_2*r_1)
-%                      b_0(k_2*r_2) b_1(k_2*r_2) ... b_N(k_2*r_2)
-%                      ...
-%                      b_0(k_2*r_Q) b_1(k_2*r_Q) ... b_N(k_2*r_Q) ]
-%
-%   Note that the n'th order of each column increments as:
-%       [0,1,1,1,2,2,2,2,2,3,3, ... N],
-%   to match with the order-mode index's of (n,m) = (0,0) (1,-1) (1,0) ...
+%       bn(:,:,k) = [ b_0(k * r1) ... b_0(k * rQ) ]
+%                   [    ...             ...      ]
+%                   [ b_N(k * r1) ... b_N(k * rQ) ]
 %
 % Equation:
 %
@@ -47,18 +36,33 @@ function [bn] = sph_bn_cardioid(N,k,r)
 % Subfunctions: none
 % MAT-files required: none
 %
-% See also: sph_jn(),  sph_bn()
+% See also: sph_bn(),  sph_bn_rigid()
 %
 % Author: Lachlan Birnie
 % Audio & Acoustic Signal Processing Group - Australian National University
 % Email: Lachlan.Birnie@anu.edu.au
 % Website: https://github.com/lachlanbirnie
 % Creation: 13-Dec-2024
-% Last revision: 13-Dec-2024
+% Last revision: 10-Jan-2025
+
+    arguments
+        N (1,1) {mustBeNonnegative, mustBeInteger}
+        k (1,1,:) {mustBeNonnegative}
+        r (1,:) {mustBeNonnegative}
+        options.orientation {mustBeMember(options.orientation, ["[N,Q]", "[Q,N]", "[N,Q,K]", "[Q,N,K]"])} = '[N,Q]'
+    end
 
     import shaasp.sph_jn
     import shaasp.sph_djndx
     
+    % Cardioid baffle equation.
     bn = sph_jn(N,k,r) - 1i .* sph_djndx(N,k,r);
+
+    % Options orientation.
+    switch options.orientation
+        case {'[Q,N]', '[Q,N,K]'}
+            bn = permute(bn, [2,1,3]);
+        otherwise
+    end
 
 end

@@ -1,4 +1,4 @@
-function [djndx] = sph_djndx(N,k,r)
+function [djndx] = sph_djndx(N,k,r,options)
 % SPH_DJNDX - Differential of spherical Bessel function: d/dx j_n(x)
 %   Differential of first kind spherical Bessel function
 %   d/dx j_n(x) where x = k*r.
@@ -8,12 +8,12 @@ function [djndx] = sph_djndx(N,k,r)
 % Inputs:
 %
 %   N   | Order of the differential spherical Bessel function matrix.
-%   k   | [1 by K] vector of wave numbers (frequency) arguments.
-%   r   | [Q by 1] vector of radius arguments (m).
+%   k   | [K,1] vector of wave numbers (frequency) arguments.
+%   r   | [Q,1] vector of radius arguments (m).
 %
 % Outputs:
 %
-%   djdx    : [Q by (N+1)^2 by K] matrix of d/dx j_n(x) terms.
+%   djdx    : [(N+1)^2 by Q by K] matrix of d/dx j_n(x) terms.
 %
 % Equations:
 %
@@ -44,28 +44,27 @@ function [djndx] = sph_djndx(N,k,r)
 % Email: Lachlan.Birnie@anu.edu.au
 % Website: https://github.com/lachlanbirnie
 % Creation: 28-Jan-2021
-% Last revision: 16-Dec-2024
+% Last revision: 10-Jan-2025
 
-
-    % Input checking.
-    validateattributes(N, {'double'},{'integer','>=',0,'scalar'});
-    if iscolumn(k), k = k.'; end
-    validateattributes(k, {'double'},{'vector','nrows',1,'>=',0});
-    if isrow(r), r = r.'; end
-    validateattributes(r, {'double'},{'vector','ncols',1,'>=',0});
+    arguments
+        N (1,1) {mustBeNonnegative, mustBeInteger}
+        k (1,1,:) {mustBeNonnegative}
+        r (1,:) {mustBeNonnegative}
+        options.orientation {mustBeMember(options.orientation, ["[N,Q]", "[Q,N]", "[N,Q,K]", "[Q,N,K]"])} = '[N,Q]'
+    end
     
     % Implicit inputs.
     K = length(k);
     Q = length(r);
 
     % Value of n for all nm pairs [0 : (N+1)^2].
-    v_n = @(N) repelem((0:N), 2.*(0:N)+1);
+    vec_n = repelem((0:N), 2.*(0:N)+1).';  % [N,1]
     
-    % Expand function arguments into matrices [Q,N,K].
-    arg_n = repmat(v_n(N), [Q, 1, K]);
+    % Expand function arguments into matrices [N,Q,K].
+    arg_n = repmat(vec_n, [1, Q, K]);
     arg_n_plus1 = arg_n + 1;
-    arg_k = repmat(reshape(k, [1,1,K]), [Q, (N+1)^2, 1]);
-    arg_r = repmat(r, [1, (N+1)^2, K]);
+    arg_k = repmat(k, [(N+1)^2, Q, 1]);
+    arg_r = repmat(r, [(N+1)^2, 1, K]);
     
     % Spherical coefficient.
     sph_coe = sqrt(pi/2) .* (1 ./ sqrt(arg_k .* arg_r));
@@ -77,27 +76,34 @@ function [djndx] = sph_djndx(N,k,r)
     jn_plus1 = sph_coe .* besselj(arg_n_plus1 + 0.5, arg_k .* arg_r);
     
     % Address Bessel zeros.
-    ind_x_zero = ((arg_k .* arg_r) == 0);
-    if ~isempty(nonzeros(ind_x_zero))
+    ind_x_is_zero = ((arg_k .* arg_r) == 0);
+    if ~isempty(nonzeros(ind_x_is_zero))
         % j_(n)(kr)
-        ind_n_zero = (arg_n == 0);
-        jn(ind_x_zero & ind_n_zero) = 1;   % j_(n=0)(x=0) = 1
-        jn(ind_x_zero & ~ind_n_zero) = 0;  % j_(n!=0)(x=0) = 0
+        ind_n_is_zero = (arg_n == 0);
+        jn(ind_x_is_zero & ind_n_is_zero) = 1;   % j_(n=0)(x=0) = 1
+        jn(ind_x_is_zero & ~ind_n_is_zero) = 0;  % j_(n!=0)(x=0) = 0
         
         % j_(n+1)(kr)
-        ind_np1_zero = (arg_n_plus1 == 0);
-        jn_plus1(ind_x_zero & ind_np1_zero) = 1;   % j_(n=0)(x=0) = 1
-        jn_plus1(ind_x_zero & ~ind_np1_zero) = 0;  % j_(n!=0)(x=0) = 0
+        ind_np1_is_zero = (arg_n_plus1 == 0);
+        jn_plus1(ind_x_is_zero & ind_np1_is_zero) = 1;   % j_(n=0)(x=0) = 1
+        jn_plus1(ind_x_is_zero & ~ind_np1_is_zero) = 0;  % j_(n!=0)(x=0) = 0
     end
     
     % Differential first kind spherical Bessel function.
     djndx = ( (arg_n ./ (arg_k .* arg_r)) .* jn) - jn_plus1;
 
     % Address differential bessel zeros.
-    if ~isempty(ind_x_zero)
-        ind_n_one = (arg_n == 1);
-        djndx(ind_x_zero & ind_n_one) = 1/3;  % d/dx jn(x) = 1/3    [for n == 1]
-        djndx(ind_x_zero & ~ind_n_one) = 0;  % d/dx jn(x) = 0      [for n != 1]
+    if ~isempty(ind_x_is_zero)
+        ind_n_is_one = (arg_n == 1);
+        djndx(ind_x_is_zero & ind_n_is_one) = 1/3;  % d/dx jn(x) = 1/3    [for n == 1]
+        djndx(ind_x_is_zero & ~ind_n_is_one) = 0;  % d/dx jn(x) = 0      [for n != 1]
+    end
+
+    % Options orientation.
+    switch options.orientation
+        case {'[Q,N]', '[Q,N,K]'}
+            djndx = permute(djndx, [2,1,3]);
+        otherwise
     end
 
 end

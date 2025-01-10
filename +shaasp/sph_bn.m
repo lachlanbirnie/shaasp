@@ -1,44 +1,36 @@
-function [bn] = sph_bn(N,k,r,r_baff)
-% SPH_BN - Spherical Rigid Baffle Equation, bn(kr).
-%   Function assumes a rigid sphere, where the sphere radius is equal to
-%   the receiver radii. 
-%   Use sph_jn() for a open sphere case. 
+function [bn] = sph_bn(N,k,r,type,options)
+% SPH_BN - Spherical Baffle Equation, bn(kr).
+%   'open', 'rigid', and 'cardoid' baffle equations.
 %
-% Syntax:  [bn] = sph_bn(N,k,r,R)
+% Syntax:  [bn] = sph_bn(N,k,r,type)
 %
 % Inputs:
 %
 %   N       Order of the returned baffle term matrix.
-%   k       [1 by K] vector of frequency (wave number) arguments.
-%   r       [Q by 1] vector of radius arguments (m).
-%   r_baff  Radius of rigid baffle, default is same as r.
+%   k       [K,1] vector of frequency (wave number) arguments.
+%   r       [Q,1] vector of radius arguments (m).
+%   type    'open', 'rigid', 'cardioid'
+%
+%   options
+%       r_baff  Radius of rigid baffle, default is same as r.
 %
 % Outputs:
 %
-%   b  [Q by (N+1)^2 by K] matrix of rigid baffle terms,
-%      where b(a,b,c) = b_[n(b)](k(c)*r(a));
+%   bn  [(N+1)^2 by Q by K] matrix of array baffle equation.
 %
-%       b(:,:,k_1) = [ b_0(k_1*r_1) b_1(k_1*r_1) ... b_N(k_1*r_1)
-%                      b_0(k_1*r_2) b_1(k_1*r_2) ... b_N(k_1*r_2)
-%                      ...
-%                      b_0(k_1*r_Q) b_1(k_1*r_Q) ... b_N(k_1*r_Q) ]
-%
-%       b(:,:,k_2) = [ b_0(k_2*r_1) b_1(k_2*r_1) ... b_N(k_2*r_1)
-%                      b_0(k_2*r_2) b_1(k_2*r_2) ... b_N(k_2*r_2)
-%                      ...
-%                      b_0(k_2*r_Q) b_1(k_2*r_Q) ... b_N(k_2*r_Q) ]
-%
-%   Note that the n'th order of each column increments as:
-%       [0,1,1,1,2,2,2,2,2,3,3, ... N],
-%   to match with the order-mode index's of (n,m) = (0,0) (1,-1) (1,0) ...
+%       bn(:,:,k) = [ b_0(k * r1) ... b_0(k * rQ) ]
+%                   [    ...             ...      ]
+%                   [ b_N(k * r1) ... b_N(k * rQ) ]
 %
 % Equation:
 %
-%   Rigid Baffle Equation:
+%   Array Baffle Equation:
 %
-%                           /  d/dx j_n(kR)           \
+%       b_n(kr) = j_n(kr) - i * d/dx j_n(kr)                [cardioid]
+%
+%                           /  d/dx j_n(kr)           \
 %       b_n(kr) = j_n(kr) - |  ------------ X h_n(kr) |     [rigid sphere]
-%                           \  d/dx h_n(kR)           /
+%                           \  d/dx h_n(kr)           /
 %
 %       b_n(kr) = j_n(kr)                                   [open sphere]
 %
@@ -47,27 +39,47 @@ function [bn] = sph_bn(N,k,r,r_baff)
 % Subfunctions: none
 % MAT-files required: none
 %
-% See also: sph_jn,  sph_bn_cardioid.
+% See also: sph_jn, sph_bn_rigid,  sph_bn_cardioid.
 %
 % Author: Lachlan Birnie
 % Audio & Acoustic Signal Processing Group - Australian National University
 % Email: Lachlan.Birnie@anu.edu.au
 % Website: https://github.com/lachlanbirnie
 % Creation: 28-Jan-2021
-% Last revision: 07-Jan-2025
+% Last revision: 10-Jan-2025
 
     arguments
-        N (1,1) {mustBeInteger}
-        k
-        r
-        r_baff = r;
+        N (1,1) {mustBeNonnegative, mustBeInteger}
+        k (1,1,:) {mustBeNonnegative}
+        r (1,:) {mustBeNonnegative}
+        type {mustBeMember(type, ["open", "rigid", "cardioid"])} = 'rigid'
+        options.r_baff (1,:) {mustBeNonnegative} = r
+        options.orientation {mustBeMember(options.orientation, ["[N,Q]", "[Q,N]", "[N,Q,K]", "[Q,N,K]"])} = '[N,Q]'
     end
     
     import shaasp.sph_jn
-    import shaasp.sph_djndx
-    import shaasp.sph_dhndx
-    import shaasp.sph_hn
-    
-    bn = sph_jn(N,k,r) - (sph_djndx(N,k,r_baff) ./ sph_dhndx(N,k,r_baff)) .* sph_hn(N,k,r);
+    import shaasp.sph_bn_rigid
+    import shaasp.sph_bn_cardioid
 
+    switch type
+        case 'open'
+            bn = sph_jn(N,k,r);
+
+        case 'rigid'
+            bn = sph_bn_rigid(N,k,r,options.r_baff);
+
+        case 'cardioid'
+            bn = sph_bn_cardioid(N,k,r);
+
+        otherwise
+            error('Invalid array baffle type.');
+    end
+
+    % Options orientation.
+    switch options.orientation
+        case {'[Q,N]', '[Q,N,K]'}
+            bn = permute(bn, [2,1,3]);
+        otherwise
+    end
+    
 end

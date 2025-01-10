@@ -12,7 +12,7 @@ function [c] = sph_bninv_regularization(bnkr, type, options)
 %   SOFTKNEE_AMP_DB = 62;  % Softknee max amplitude gain value.
 %
 % Outputs:
-%   c - regularization weight matrix for use in: c .* bnkr.^-1;
+%   c - [N by R by K] regularization weight matrix use in: c .* bnkr.^-1;
 %
 % References:
 % Ville Pulkki; Symeon Delikaris-Manias; Archontis Politis, 

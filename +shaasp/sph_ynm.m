@@ -1,7 +1,7 @@
-function [Y] = sph_ynm(N,theta,phi)
-% SPH_YNM - Spherical Harmonic Basis Functions Y_(n,m)(theta, phi)
+function [Y] = sph_ynm(N,theta,phi,options)
+% SPH_YNM - Spherical Harmonic Basis Functions Y_(n,m)(theta, phi, Options)
 %   Calculate the spherical harmonic basis function for each element of the
-%   input vectors (theta, phi) and each harmonic pair up to order N.
+%   input vectors (theta, phi) and each harmonic (n,m) pair up to order N.
 %   Uing Fourier Acoustics book definiton.
 %
 % Syntax:  [Y] = sph_ynm(N,theta,phi)
@@ -9,20 +9,20 @@ function [Y] = sph_ynm(N,theta,phi)
 % Inputs:
 %
 %   N       Order of the returned spherical harmonic matrix.
-%   t       [Q by 1] vector of theta positions (rad).
-%   p       [Q by 1] vector of phi positions (rad).
+%   theta   [Q,1] elevation positions [0,pi] downwards from z-axis.
+%   phi     [Q,1] azimuth positions [0, 2pi) counterclockwise from x-axis.
+%
+%   options
+%       orientation = '[N,Q]' (default), '[Q,N]'.
 %
 % Outputs:
 %
-%   Y       [Q by (N+1)^2] matrix of spherical harmonic equations,
-%           where each element of Y(i,j) = Y(jth nm, t(i), p(i)).
+%   Y       [(N+1)^2 by Q] matrix of spherical harmonic basis functions,
+%           where each element of Y(i,q) = Y(nm(i), theta(q), phi(q)).
 %
-%           Y = [ Y_00(t_1,p_1) Y_1-1(t_1, p_1) ... Y_N+N(t_1,p_1)
-%                 Y_00(t_2,p_2) Y_1-1(t_2, p_2) ... Y_N+N(t_2,p_2)
-%                 ...
-%                 Y_00(t_q,p_q) Y_1-1(t_q, p_q) ... Y_N+N(t_q,p_q)
-%                 ...
-%                 Y_00(t_Q,p_Q) Y_1-1(t_Q, p_Q) ... Y_N+N(t_Q,p_Q) ]
+%           Y = [ Y_00(theta[1], phi[1]) ... Y_00(theta[Q], phi[Q]) ]
+%               [             ...                   ...             ]
+%               [ Y_NN(theta[1], phi[1]) ... Y_NN(theta[Q], phi[Q]) ]
 %
 % Equations:
 %
@@ -54,71 +54,67 @@ function [Y] = sph_ynm(N,theta,phi)
 %   Note that MATLAB includes the Condon-Shortley phase.
 %
 % Example: 
-%   Line 1 of example
-%   Line 2 of example
-%   Line 3 of example
+%   Y = shaasp.sph_ynm(4, pi/2, pi/3);
+%   Y = shaasp.sph_ynm(4, pi/2, pi/3, 'orientation', '[Q,N]');
 %
 % Other m-files required: none
 % Subfunctions: none
 % MAT-files required: none
 %
-% See also: OTHER_FUNCTION_NAME1,  OTHER_FUNCTION_NAME2
+% See also: sph_jn,  sph_ynm_real
 %
 % Author: Lachlan Birnie
 % Audio & Acoustic Signal Processing Group - Australian National University
 % Email: Lachlan.Birnie@anu.edu.au
 % Website: https://github.com/lachlanbirnie
 % Creation: 13-Feb-2024
-% Last revision: 19-July-2024
+% Last revision: 10-Jan-2025
 
-    % Input checking.
-    validateattributes(N, {'double'},{'integer','>=',0,'size',[1,1]});
-    if isrow(theta), theta = theta.'; end
-    validateattributes(theta, {'double'},{'vector','ncols',1});
-    if isrow(phi), phi = phi.'; end
-    validateattributes(phi, {'double'},{'vector','ncols',1,'size',size(theta)});
+    arguments
+        N (1,1) {mustBeNonnegative, mustBeInteger}
+        theta (1,:) {mustBeNumeric}
+        phi (1,:) {mustBeNumeric}
+        options.orientation {mustBeMember(options.orientation, ["[N,Q]", "[Q,N]"])} = '[N,Q]'
+    end
 
-    % Implicit inputs.
-    Q = length(theta);
+    if length(theta) ~= length(phi)
+        error('Arguments theta and phi must be same length');
+    end
 
-    % Value of n for all nm pairs [0 : (N+1)^2].
-    v_n = @(N) repelem((0:N), 2.*(0:N)+1);
-
-    % Value of m for all nm pairs [0 : (N+1)^2].
-    v_m = @(N) (1:(N+1)^2) - v_n(N).^2 - v_n(N) - 1;
-
-    % Get set of harmonic (n,m)'s in vectors and matrices.
-    vec_n = v_n(N);                   % [1,(N+1)^2]
-    vec_m = v_m(N);                   % [1,(N+1)^2]
-    arg_phi = repmat(phi, [1, (N+1)^2]);         % [Q,(N+1)^2]
-    arg_m = repmat(v_m(N), [Q, 1]);   % [Q,(N+1)^2]
-    
     % Solve Associate Legendre Function. 
-    L = zeros(Q, (N+1)^2);
-
+    L = zeros((N+1)^2, length(theta));  % [(N+1)^2, Q]
     for n = (0 : N)
-        
         Ln = legendre(n, cos(theta));  % [(N+1), Q] for terms (n, m = 0>n).
-        
         for m = (0 : n)
-            
-            % Positive modes.
-            L(:, n^2+n+m+1) = Ln(m+1,:);
-            
-            % Negative modes.
-            L(:, n^2+n-m+1) = (-1)^(m) .* (factorial(n-m)/factorial(n+m)) .* Ln(m+1,:);
-
+            % Positive and zero modes.
+            L(n^2+n+m+1, :) = Ln(m+1, :);
+            if (m ~= 0)
+                % Negative modes.
+                L(n^2+n-m+1, :) = (-1)^(m) .* (factorial(n-m)/factorial(n+m)) .* Ln(m+1, :);
+            end
         end % m
     end % n
+
+    % Create pairs of (n,m) along column vector.
+    col_n = repelem((0:N).', 2.*(0:N)+1);  % [(N+1)^2, 1]
+    col_m = (1:(N+1)^2).' - col_n.^2 - col_n - 1;  % [(N+1)^2, 1]
     
     % Solve normalisation term.
-    norm = sqrt((2.*vec_n + 1) ./ (4*pi)) ...  % [1,(N+1)^2]
-        .* sqrt(factorial(vec_n - vec_m) ./ factorial(vec_n + vec_m));
+    norm = sqrt((2.*col_n + 1) ./ (4*pi)) ...  % [(N+1)^2, 1]
+        .* sqrt(factorial(col_n - col_m) ./ factorial(col_n + col_m));
     
     % Solve exponential term.
-    E = exp(1i .* arg_m .* arg_phi);  % [Q,(N+1)^2]
+    E = exp(1i .* col_m .* phi);  % [(N+1)^2, Q]
     
     % Solve Spherical Harmonic Function.
-    Y = norm .* L .* E;  % [Q,(N+1)^2]
+    Y = norm .* L .* E;  % [(N+1)^2, Q]
+
+    % Options orientation for [Y].
+    switch options.orientation
+        case '[Q,N]'
+            Y = Y.';
+        otherwise
+            % Y = Y;
+    end
 
 end
